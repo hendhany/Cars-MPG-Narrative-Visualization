@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
+    
+    <h1>Save by choosing the right car for you.</h1>
+      <p><font size="+2">
+        If your hover over each dot, a box will show up with the information about each car model and the average miles per gallon for this car on the highway and in the city.
+      </font></p>
+    <style>
+      body {
+        margin: 0px;
+      }
+      
+      .button {
+        margin-left: 0;
+      }
+   
+      .tick line {
+        stroke: #C0C0BB;
+      }
+      .tick text, .legendCells text {
+        fill: #111111;
+        font-size: 20pt;
+        font-family: sans-serif;
+      }
+      .axis-label, .legend-label {
+        fill: #635F5D;
+        font-size: 20pt;
+        font-family: sans-serif;
+      }
+      .annotation-note-title, text.title {
+        font-size: 10pt;
+        font-family: sans-serif;
+      }
+
+      .annotation text {
+      fill: purple;
+      }
+      
+      #tooltip {
+        font-size: 1em;
+        color: whitesmoke;
+        position: absolute;
+        z-index: 10;
+        pointer-events: none;
+        border-radius: 3px;
+        text-align: middle;
+        opacity: 0;
+        background: steelblue;
+        padding-left: 0.125em;
+        padding-right: 0.125em;
+        padding-top: 0.125em;
+        padding-bottom: 0.125em;
+        width: 120px; 
+        height: 120px
+      }
+
+    </style>
+  </head>
+  <body onload="init()">
+    <svg width="960" height="500"></svg>
+    <div id="tooltip"></div>
+    <script>
+      async function init() {
+        const data = await d3.csv("cars2017.csv");
+        console.log(data);
+
+        const type = d3.annotationLabel
+
+        const annotations = [{
+          note: {
+            label: " is the Most efficient on fuel usage in city and on the highyway",
+            bgPadding: 20,
+            title: "Hyundai Electric :"
+          },
+        
+          data: { AverageCityMPG: 150, AverageHighwayMPG: 122 },
+          className: "show-bg",
+          dy: -37,
+          dx: -80, 
+    
+          },{
+          note: {
+            label: " is the least efficient on fuel usage in city",
+            bgPadding: 20,
+            title: "Lamborghini :"
+          },
+          subject: {
+            radius: 500
+          },
+          data: { AverageCityMPG: 10, AverageHighwayMPG: 17 },
+          className: "show-bg",
+          dy: -120,
+          dx: 70
+          },{
+            note: {
+            label: " is the least efficient on fuel usage in city",
+            bgPadding: 20,
+            title: "Ferrari :"
+          },
+          data: { AverageCityMPG: 12, AverageHighwayMPG: 16 },
+          className: "show-bg",
+          dy: 20,
+          dx: 90
+          
+        }]  
+
+      var width = 700;
+      var height = 700; 
+      var margin = 100;
+
+      var makeDomain = d3
+        .map(data, function(d){return d.Make;})
+        .keys();
+
+      var svg = d3
+        .select("body")
+        .select("svg")
+        .attr("width", width + 2 * margin + 60)
+        .attr("height", height + 2 * margin);
+
+      var xScale = d3.scaleLog().domain([10, 150]).range([0, width]);
+      var yScale = d3.scaleLog().domain([10, 150]).range([height, 0]);
+      
+      const makeAnnotations = d3.annotation()
+        .editMode(true)
+        .notePadding(15)
+        .type(type)
+        .accessors({
+          x: d => xScale(d.AverageCityMPG)  + margin,
+          y: d => yScale(d.AverageHighwayMPG) + margin,
+        })
+        .accessorsInverse({
+          AverageCityMPG: d => x.invert(d.xScale),
+          AverageHighwayMPG: d => y.invert(d.yScale)
+        })
+        .annotations(annotations);
+
+      d3.select("svg")
+        .append("g")
+        .attr("class", "annotation-group")
+        .style("backgroup-color", "salmon")
+        .call(makeAnnotations)
+
+      var xAxis = d3
+        .axisBottom()
+        .scale(xScale)
+        .tickValues([10, 20, 50, 100])
+        .tickFormat(d3.format("~s"));
+
+
+      var yAxis = d3
+        .axisLeft()
+        .scale(yScale)
+        .tickValues([10, 20, 50, 100])
+        .tickFormat(d3.format("~s"));
+
+      var keys = d3
+        .map(data, function(d){return d.Origin;})
+        .keys();
+
+      var color = d3
+        .scaleOrdinal()
+        .domain(keys)
+        .range(d3.schemeDark2);
+      
+        // Tooltip
+      var tooltip = d3.select("#tooltip");
+
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+        .selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) {
+          return xScale(d.AverageCityMPG);
+        })
+        .attr("cy", function (d) {
+          return yScale(d.AverageHighwayMPG);
+        })
+        .attr("r", function (d) {
+            return parseInt(d.EngineCylinders) + 2; 
+        })
+        .style("fill", function(d) {
+          return color(d.Origin);
+        })
+        .style("stroke", "black")
+        .on('mouseover', function (d) {
+          tooltip
+            .attr("transform", "translate(" + margin + ","  + margin + ")")
+            .style("opacity", 1)
+            .style("left", (d3.event.pageX)+"px")
+            .style("top", (d3.event.pageY)+"px")
+            .html("Make: " + d.Make + 
+                  "<br> Fuel: " + d.Fuel +
+                  "<br> HW AMPG: " + d.AverageHighwayMPG +
+                  "<br> Ci AMPG: " + d.AverageCityMPG)
+        })
+        .on("mouseout", function() {tooltip.style("opacity", 0)});
+
+
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + (height + margin) + ")")
+        .call(xAxis);
+
+      svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("x", width - 3*margin)
+        .attr("y", height + margin + 50)
+        .text("Average City MPG")
+        .style("font-size", "30px");  
+
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+        .call(yAxis);
+
+      svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 30)
+        .attr("x", -margin*4)
+        .text("Average Highway MPG")
+        .style("font-size", "30px");
+      
+      
+
+      svg
+        .selectAll("myRect")
+        .data(keys)
+        .enter()
+        .append("rect")
+          .attr("x", width + margin + 40)
+          .attr("y", function(d,i){ return  96 + i*25}) 
+          .attr("width", 7)
+          .attr("height",7)
+          .style("fill", function(d) {return color(d);})
+
+      
+      svg
+        .selectAll("legendLabel")
+        .data(keys)
+        .enter()
+        .append("text")
+          .attr("x", width + margin + 60)
+          .attr("y", function(d,i){ return  100 + i*25}) 
+          .style("fill", function(d) {return color(d);})
+          .text(function(d){ return d})
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle");
+ 
+    }
+      
+    </script>
+
+    <p><font size="+2">
+      <br> If you are looking for a car that save you on fuel while driving around the city you can see more detail by clicking on this button
+      <a ???><button type="button" class="button">In City AverageHighwayMPG</button></a> 
+      <br>But If you are looking for a car that is more fuel efficient on the highway,click on this button 
+      <a ????"><button type="button" class="button">In City AverageHighwayMPG</button></a> 
+    </font></p>
+
+    
+  </body>
+</html>

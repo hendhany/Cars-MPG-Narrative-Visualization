@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <h1>Save by choosing the right car for you.</h1>
+      <p>
+        <p><font size="+2">
+          In the chart below, each bar represent a car make, and the bar color represent its origin, the bar height is its average MPG in the city.
+          When hovering with the mouse over the bar a box will appear with the number of its engine cylinders and the type of Fuel it uses.
+        </font></p>
+      </p>
+    <style>
+      body {
+        margin: 0px;
+      }
+   
+      .tick line {
+        stroke: #C0C0BB;
+      }
+      .tick text, .legendCells text {
+        fill: #111111;
+        font-size: 20pt;
+        font-family: sans-serif;
+      }
+      .axis-label, .legend-label {
+        fill: #635F5D;
+        font-size: 20pt;
+        font-family: sans-serif;
+      }
+
+      #tooltip {
+        font-size: 1em;
+        color: whitesmoke;
+        position: absolute;
+        z-index: 10;
+        pointer-events: none;
+        border-radius: 3px;
+        text-align: middle;
+        opacity: 0;
+        background: steelblue;
+        padding-left: 0.125em;
+        padding-right: 0.125em;
+        padding-top: 0.125em;
+        padding-bottom: 0.125em;
+        width: 100px; 
+        height: 100px
+      }
+    </style>
+  </head>
+  <body onload="init()">
+    <svg width="700" height="700"></svg>
+    <div id="tooltip"></div>
+    <script>
+      async function init() {
+        const data = await d3.csv("cars2017.csv");
+        console.log(data);
+
+      var width = 900;
+      var height = 400; 
+      var margin = 100;
+
+
+      var makeDomain = d3.map(data, function(d){return d.Make;}).keys();
+      
+
+      var svg = d3
+        .select("body")
+        .select("svg")
+        .attr("width", width + 2 * margin)
+        .attr("height", height + 2 * margin);
+
+      var xScale = d3
+        .scaleBand()
+        .domain(makeDomain.map(function(d) {return d;}))
+        .range([0, width])
+        .padding(0.2);
+
+      var yScale = d3
+        .scaleLog()
+        .domain([10, 150])
+        .range([height, 0]);
+
+      var xAxis = d3
+        .axisBottom()
+        .scale(xScale);
+        
+
+      var yAxis = d3
+        .axisLeft()
+        .scale(yScale)
+        .tickValues([10, 20, 50, 100])
+        .tickFormat(d3.format("~s"));
+
+      var keys = d3.map(data, function(d){return d.Origin;}).keys();  
+
+      var color = d3
+        .scaleOrdinal()
+        .domain(keys)
+        .range(d3.schemeDark2);
+      
+     
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+        .selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .on("mouseover", onMouseOver) 
+        .on("mouseout", onMouseOut)  
+        .attr("x", function (d) {
+          return xScale(d.Make);
+        })
+        .attr("y", function (d) {
+          return yScale(d.AverageCityMPG);
+        })
+        .attr("width", xScale.bandwidth())
+        .transition()
+        .ease(d3.easeLinear)
+        .duration(200)
+        .delay(function (d, i) {
+            return i * 20;
+         })
+        .attr("height", function (d) {
+            return height - yScale(d.AverageCityMPG); 
+        })
+        .style("fill", function(d) {
+          return color(d.Origin);
+        });
+
+
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + (height + margin) + ")")
+        .call(xAxis)
+        .selectAll("text")	
+        .style("text-anchor", "end")
+        .style("font-size", 10)
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-65)")
+        .attr("font-weight", "700");
+
+      svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("x", width/2 + margin)
+        .attr("y", height + margin + 100)
+        .text("Make")
+        .style("font-size", "30px");  
+
+      svg
+        .append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+        .call(yAxis);
+        
+        
+      svg
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 30)
+        .attr("x", -margin*3)
+        .text("Average City MPG")
+        .style("font-size", "30px");
+      
+
+        svg
+        .selectAll("myRect")
+        .data(keys)
+        .enter()
+        .append("rect")
+          .attr("x", width + margin )
+          .attr("y", function(d,i){ return  100 + i*25}) 
+          .attr("width", 7)
+          .attr("height",7)
+          .style("fill", function(d) {return color(d);})
+
+      
+      svg
+        .selectAll("legendLabel")
+        .data(keys)
+        .enter()
+        .append("text")
+          .attr("x", width + margin + 20)
+          .attr("y", function(d,i){ return  105 + i*25}) 
+          .style("fill", function(d) {return color(d);})
+          .text(function(d){ return d})
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle")
+          
+
+      // Tooltip
+      var tooltip = d3.select("#tooltip");
+      function onMouseOver(d, i) {
+        d3.select(this).attr('class', 'highlight');
+        d3.select(this)
+          .transition()    
+          .duration(300)
+          .attr('width', xScale.bandwidth() + 10)
+          .attr("y", function(d) { return yScale(d.AverageCityMPG) - 15; })
+          .attr("height", function(d) { return height - yScale(d.AverageCityMPG) + 10; }),
+        tooltip
+            .attr("transform", "translate(" + margin + ","  + margin + ")")
+            .style("opacity", 1)
+            .style("left", (d3.event.pageX)+"px")
+            .style("top", (d3.event.pageY)+"px")
+            .html("Eng Cylinders: " + d.EngineCylinders +  "<br> Fuel: " + d.Fuel)
+        };
+
+    
+      function onMouseOut(d, i) {
+        d3.select(this).attr('class', 'bar');
+        d3.select(this)
+          .transition()     
+          .duration(300)
+          .attr('width', xScale.bandwidth())
+          .attr("y", function(d) { return yScale(d.AverageCityMPG); })
+          .attr("height", function(d) { return height - yScale(d.AverageCityMPG); }),
+        tooltip
+          .style("opacity", 0)
+        };
+
+        d3.selectAll('.val')
+          .remove()
+      }
+
+  
+      
+    </script>
+
+
+<p><font size="+2">Now that have a good idea about each different car provided in our data sample and their average MPG useage in the city,
+  <br>If you want to know more infomation about their average MPG usage on the highway, click on this button 
+  <a ????"><button type="button" class="button">In City Aver MPG</button></a> 
+  If you want to go back to the main bage, click on this <button class="<a ????"><button type="button" class="button"><font size="+1">Home</font></button></a></button>
+</font></p>
+
+    
+  </body>
+</html>
