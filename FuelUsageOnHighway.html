@@ -51,7 +51,7 @@
         padding-right: 0.125em;
         padding-top: 0.125em;
         padding-bottom: 0.125em;
-        width: 100px; 
+        width: 170px; 
         height: 100px
       }
     </style>
@@ -263,7 +263,9 @@
             .style("opacity", 1)
             .style("left", (d3.event.pageX)+"px")
             .style("top", (d3.event.pageY)+"px")
-            .html("Eng Cylinders: " + d.EngineCylinders +  "<br> Fuel: " + d.Fuel)
+            .html("Eng Cylinders: " + d.EngineCylinders +  
+                  "<br> Fuel: " + d.Fuel +
+                  "<br> d.AverageHighwayMPG: " + d.AverageHighwayMPG)
         };
 
     
@@ -291,7 +293,7 @@
 <p><font size="+2">Now that you navigate the details relatied to cars provided in our data and their average MPG useage on the higway,
   If you want to know more infomation about their average MPG usage in city, click
   <a href="https://hendhany.github.io/Cars-MPG-Narrative-Visualization/FuelUsageInCity"><button type="button" class="button"><font="+1">In City MPG</font></button></a> 
-  If you want to go back to the main bage, click <a href="https://hendhany.github.io/Cars-MPG-Narrative-Visualization/"><button type="button" class="button"><font size="+1">Home</font></button></a>
+  <font size="+2">If you want to go back to the main bage, click </font><a href="https://hendhany.github.io/Cars-MPG-Narrative-Visualization/"><button type="button" class="button"><font size="+1">Home</font></button></a>
 </font></p>
 
 
