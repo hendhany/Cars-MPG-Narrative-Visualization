@@ -27,6 +27,15 @@
         font-family: sans-serif;
       }
 
+           .annotation-note-title, text.title {
+        font-size: 10pt;
+        font-family: sans-serif;
+      }
+
+      .annotation text {
+      fill: purple;
+      }
+
       #tooltip {
         font-size: 1em;
         color: whitesmoke;
@@ -54,6 +63,33 @@
         const data = await d3.csv("cars2017.csv");
         console.log(data);
 
+        const type = d3.annotationLabel
+
+        const annotations = [{
+          note: {
+            label: " is the Most efficient on fuel usage in city and on the highyway",
+            bgPadding: 20,
+            title: "Hyundai Electric :"
+          },
+
+          data: {Make: "Hyundai", AverageHighwayMPG: 122 },
+          className: "show-bg",
+          dy: 0,
+          dx: 180, 
+
+          },{
+          note: {
+            label: " is the least efficient on fuel usage in city",
+            bgPadding: 20,
+            title: "Ferrari"
+          },
+          data: {Make: "Ferrari", AverageHighwayMPG: 16 },
+          className: "show-bg",
+          dy: -300,
+          dx: 10
+          
+        }]   
+
       var width = 900;
       var height = 400; 
       var margin = 100;
@@ -79,6 +115,26 @@
         .domain([10, 150])
         .range([height, 0]);
 
+        const makeAnnotations = d3.annotation()
+        .editMode(true)
+        .notePadding(15)
+        .type(type)
+        .accessors({
+          x: d => xScale(d.Make)  + margin,
+          y: d => yScale(d.AverageHighwayMPG) + margin,
+        })
+        .accessorsInverse({
+          Make: d => x.invert(d.xScale),
+          AverageHighwayMPG: d => y.invert(d.yScale)
+        })
+        .annotations(annotations);
+
+      d3.select("svg")
+        .append("g")
+        .attr("class", "annotation-group")
+        .style("backgroup-color", "salmon")
+        .call(makeAnnotations)  
+
       var xAxis = d3
         .axisBottom()
         .scale(xScale);
@@ -96,6 +152,8 @@
         .scaleOrdinal()
         .domain(keys)
         .range(d3.schemeDark2);
+
+
       
      
       svg
